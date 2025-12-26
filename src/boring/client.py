@@ -31,7 +31,7 @@ class APIClient:
         if not self.base_url:
             raise Exception("Server URL not configured.")
         with httpx.Client() as client:
-            response = client.get(f"{self.base_url}/api/v1/auth/login")
+            response = client.get(f"{self.base_url}/v1/auth/login")
             response.raise_for_status()
             return response.json().get("auth_url")
 
@@ -41,7 +41,7 @@ class APIClient:
             raise Exception("Server URL not configured.")
         with httpx.Client() as client:
             response = client.get(
-                f"{self.base_url}/api/v1/auth/callback", params={"code": code}
+                f"{self.base_url}/v1/auth/callback", params={"code": code}
             )
             response.raise_for_status()
             return response.json()
@@ -51,7 +51,7 @@ class APIClient:
         self._check_config()
         with httpx.Client() as client:
             response = client.get(
-                f"{self.base_url}/api/v1/auth/me", headers=self._headers()
+                f"{self.base_url}/v1/auth/me", headers=self._headers()
             )
             response.raise_for_status()
             return response.json()
@@ -69,7 +69,7 @@ class APIClient:
 
         with httpx.Client() as client:
             response = client.get(
-                f"{self.base_url}/api/v1/tasks/",
+                f"{self.base_url}/v1/tasks/",
                 headers=self._headers(),
                 params=params,
             )
@@ -81,7 +81,7 @@ class APIClient:
         self._check_config()
         with httpx.Client() as client:
             response = client.get(
-                f"{self.base_url}/api/v1/tasks/critical", headers=self._headers()
+                f"{self.base_url}/v1/tasks/critical", headers=self._headers()
             )
             response.raise_for_status()
             return response.json()
@@ -99,7 +99,7 @@ class APIClient:
 
         with httpx.Client(timeout=120) as client:
             response = client.get(
-                f"{self.base_url}/api/v1/tasks/download",
+                f"{self.base_url}/v1/tasks/download",
                 headers=self._headers(),
                 params=params,
             )
@@ -113,7 +113,7 @@ class APIClient:
         self._check_config()
         with httpx.Client() as client:
             response = client.post(
-                f"{self.base_url}/api/v1/tasks/{task_guid}/solve",
+                f"{self.base_url}/v1/tasks/{task_guid}/solve",
                 headers=self._headers(),
                 json={"tasklist_guid": tasklist_guid, "section_guid": section_guid},
             )
