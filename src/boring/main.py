@@ -4,6 +4,7 @@ import click
 
 from . import __version__
 from .commands.download import download
+from .commands.sections import sections
 from .commands.setup import setup
 from .commands.solve import solve
 from .commands.status import status
@@ -20,6 +21,7 @@ def cli():
       boring download   Download tasks to local folder
       boring solve      Move completed tasks to Solved
       boring status     Show current configuration
+      boring sections   List tasklists and sections
     """
     pass
 
@@ -28,6 +30,7 @@ cli.add_command(setup)
 cli.add_command(download)
 cli.add_command(solve)
 cli.add_command(status)
+cli.add_command(sections)
 
 
 def main():

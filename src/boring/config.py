@@ -91,6 +91,14 @@ def set_solved_section_guid(guid: str) -> None:
     set_value("solved_section_guid", guid)
 
 
+def get_lark_token() -> Optional[str]:
+    return get_value("lark_token")
+
+
+def set_lark_token(token: str) -> None:
+    set_value("lark_token", token)
+
+
 def is_configured() -> bool:
     """Check if the CLI is properly configured."""
     config = load_config()

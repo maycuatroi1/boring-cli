@@ -4,7 +4,9 @@ from typing import Optional
 
 import httpx
 
-from .config import get_jwt_token, get_server_url
+from .config import get_jwt_token, get_server_url, get_lark_token, set_lark_token
+
+LARK_BASE_URL = "https://open.larksuite.com/open-apis"
 
 
 class APIClient:
@@ -116,6 +118,69 @@ class APIClient:
                 f"{self.base_url}/v1/tasks/{task_guid}/solve",
                 headers=self._headers(),
                 json={"tasklist_guid": tasklist_guid, "section_guid": section_guid},
+            )
+            response.raise_for_status()
+            return response.json()
+
+    def get_lark_token(self) -> dict:
+        """Get Lark access token from server."""
+        self._check_config()
+        with httpx.Client() as client:
+            response = client.get(
+                f"{self.base_url}/v1/auth/lark-token",
+                headers=self._headers(),
+            )
+            response.raise_for_status()
+            return response.json()
+
+
+class LarkClient:
+    """Client for direct Lark API calls."""
+
+    def __init__(self, access_token: Optional[str] = None):
+        self.access_token = access_token or get_lark_token()
+
+    def _headers(self) -> dict:
+        return {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json",
+        }
+
+    def _check_token(self) -> None:
+        if not self.access_token:
+            raise Exception("Lark token not available. Run 'boring setup' first.")
+
+    def list_tasklists(self, page_size: int = 50) -> dict:
+        """List all tasklists."""
+        self._check_token()
+        with httpx.Client() as client:
+            response = client.get(
+                f"{LARK_BASE_URL}/task/v2/tasklists",
+                headers=self._headers(),
+                params={"page_size": page_size},
+            )
+            response.raise_for_status()
+            return response.json()
+
+    def get_tasklist(self, tasklist_guid: str) -> dict:
+        """Get tasklist details including sections."""
+        self._check_token()
+        with httpx.Client() as client:
+            response = client.get(
+                f"{LARK_BASE_URL}/task/v2/tasklists/{tasklist_guid}",
+                headers=self._headers(),
+            )
+            response.raise_for_status()
+            return response.json()
+
+    def list_sections(self, tasklist_guid: str, page_size: int = 50) -> dict:
+        """List all sections in a tasklist."""
+        self._check_token()
+        with httpx.Client() as client:
+            response = client.get(
+                f"{LARK_BASE_URL}/task/v2/tasklists/{tasklist_guid}/sections",
+                headers=self._headers(),
+                params={"page_size": page_size},
             )
             response.raise_for_status()
             return response.json()
