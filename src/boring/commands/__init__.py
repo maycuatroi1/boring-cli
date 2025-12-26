@@ -1,0 +1,1 @@
+"""Boring CLI commands."""
