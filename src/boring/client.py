@@ -178,9 +178,13 @@ class LarkClient:
         self._check_token()
         with httpx.Client() as client:
             response = client.get(
-                f"{LARK_BASE_URL}/task/v2/tasklists/{tasklist_guid}/sections",
+                f"{LARK_BASE_URL}/task/v2/sections",
                 headers=self._headers(),
-                params={"page_size": page_size},
+                params={
+                    "resource_type": "tasklist",
+                    "resource_id": tasklist_guid,
+                    "page_size": page_size,
+                },
             )
             response.raise_for_status()
             return response.json()

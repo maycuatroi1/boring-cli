@@ -16,14 +16,15 @@ console = Console()
 
 @click.command()
 @click.option("--labels", default=None, help="Comma-separated labels to filter")
-def download(labels: str):
+@click.option("--section", default=None, help="Section GUID to filter (overrides config)")
+def download(labels: str, section: str):
     """Download tasks from Lark and save as markdown files."""
     if not config.is_configured():
         console.print("[bold red]CLI not configured.[/bold red] Run 'boring setup' first.")
         raise click.Abort()
 
     bugs_dir = config.get_bugs_dir()
-    section_guid = config.get_section_guid()
+    section_guid = section or config.get_section_guid()
 
     if not bugs_dir:
         console.print("[bold red]Bugs directory not configured.[/bold red] Run 'boring setup' first.")
