@@ -80,7 +80,7 @@ boring status
 Configuration is stored in `~/.boring-agents/config.yaml`:
 
 ```yaml
-server_url: https://your-server.com
+server_url: https://boring.omelet.tech/api
 jwt_token: eyJhbGc...
 bugs_dir: /path/to/bugs
 tasklist_guid: xxxx-xxxx-xxxx

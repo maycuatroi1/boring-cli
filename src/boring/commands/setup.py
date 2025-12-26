@@ -50,7 +50,7 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
 @click.option(
     "--server-url",
     prompt="Server URL",
-    default=lambda: config.get_server_url() or "http://localhost:8000",
+    default=lambda: config.get_server_url() or "https://boring.omelet.tech/api",
     help="URL of the Boring Agents API server",
 )
 def setup(server_url: str):
