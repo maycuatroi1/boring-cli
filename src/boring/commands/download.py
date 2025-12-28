@@ -1,8 +1,6 @@
 """Download command for Boring CLI."""
 
-import base64
 import os
-import re
 from pathlib import Path
 from typing import Optional
 
@@ -12,9 +10,21 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from .. import config
-from ..client import LarkClient
+from ..client import LarkClient, APIClient
 
 console = Console()
+
+
+def refresh_lark_token() -> Optional[str]:
+    try:
+        client = APIClient()
+        result = client.get_lark_token()
+        if "access_token" in result:
+            config.set_lark_token(result["access_token"])
+            return result["access_token"]
+    except Exception:
+        pass
+    return None
 
 
 def rich_text_to_markdown(rich_text: Optional[dict]) -> str:
@@ -133,8 +143,25 @@ def download(labels: str, section: str, bugs_dir_option: str):
         task = progress.add_task("Fetching tasks from Lark...", total=None)
 
         try:
-            # Get tasks in section directly from Lark API
             result = client.list_tasks_in_section(section_guid)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                progress.update(task, description="Token expired, refreshing...")
+                new_token = refresh_lark_token()
+                if new_token:
+                    console.print("[yellow]Token refreshed successfully[/yellow]")
+                    client = LarkClient(access_token=new_token)
+                    try:
+                        result = client.list_tasks_in_section(section_guid)
+                    except Exception as retry_e:
+                        console.print(f"[bold red]Failed after token refresh:[/bold red] {retry_e}")
+                        raise click.Abort()
+                else:
+                    console.print("[bold red]Token expired and refresh failed.[/bold red] Run 'boring setup' again.")
+                    raise click.Abort()
+            else:
+                console.print(f"[bold red]Failed to fetch tasks:[/bold red] {e}")
+                raise click.Abort()
         except Exception as e:
             console.print(f"[bold red]Failed to fetch tasks:[/bold red] {e}")
             raise click.Abort()
@@ -162,15 +189,35 @@ def download(labels: str, section: str, bugs_dir_option: str):
     ) as progress:
         task = progress.add_task("Downloading tasks...", total=len(task_items))
 
+        token_refreshed = False
         for task_item in task_items:
             task_guid = task_item.get("guid")
 
             progress.update(task, description=f"Fetching task {task_guid[:8]}...")
 
             try:
-                # Get full task details
                 task_detail = client.get_task(task_guid)
                 task_data = task_detail.get("data", {}).get("task", {})
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 401 and not token_refreshed:
+                    new_token = refresh_lark_token()
+                    if new_token:
+                        client = LarkClient(access_token=new_token)
+                        token_refreshed = True
+                        try:
+                            task_detail = client.get_task(task_guid)
+                            task_data = task_detail.get("data", {}).get("task", {})
+                        except Exception:
+                            progress.advance(task)
+                            continue
+                    else:
+                        console.print(f"[yellow]Failed to fetch task {task_guid}: token expired[/yellow]")
+                        progress.advance(task)
+                        continue
+                else:
+                    console.print(f"[yellow]Failed to fetch task {task_guid}: {e}[/yellow]")
+                    progress.advance(task)
+                    continue
             except Exception as e:
                 console.print(f"[yellow]Failed to fetch task {task_guid}: {e}[/yellow]")
                 progress.advance(task)
