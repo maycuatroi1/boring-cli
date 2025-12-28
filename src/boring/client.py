@@ -188,3 +188,26 @@ class LarkClient:
             )
             response.raise_for_status()
             return response.json()
+
+    def list_tasks_in_section(self, section_guid: str, page_size: int = 50) -> dict:
+        """List all tasks in a section."""
+        self._check_token()
+        with httpx.Client() as client:
+            response = client.get(
+                f"{LARK_BASE_URL}/task/v2/sections/{section_guid}/tasks",
+                headers=self._headers(),
+                params={"page_size": page_size},
+            )
+            response.raise_for_status()
+            return response.json()
+
+    def get_task(self, task_guid: str) -> dict:
+        """Get task details including description."""
+        self._check_token()
+        with httpx.Client(timeout=60) as client:
+            response = client.get(
+                f"{LARK_BASE_URL}/task/v2/tasks/{task_guid}",
+                headers=self._headers(),
+            )
+            response.raise_for_status()
+            return response.json()
