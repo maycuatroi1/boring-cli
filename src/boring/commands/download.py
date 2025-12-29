@@ -184,7 +184,7 @@ def download(labels: str, section: str, bugs_dir_option: str):
         try:
             result = client.list_tasks_in_section(section_guid)
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 401:
+            if e.response.status_code in (400, 401):
                 progress.update(task, description="Token expired, refreshing...")
                 new_token = refresh_lark_token()
                 if new_token:
@@ -238,7 +238,7 @@ def download(labels: str, section: str, bugs_dir_option: str):
                 task_detail = client.get_task(task_guid)
                 task_data = task_detail.get("data", {}).get("task", {})
             except httpx.HTTPStatusError as e:
-                if e.response.status_code == 401 and not token_refreshed:
+                if e.response.status_code in (400, 401) and not token_refreshed:
                     new_token = refresh_lark_token()
                     if new_token:
                         client = LarkClient(access_token=new_token)
