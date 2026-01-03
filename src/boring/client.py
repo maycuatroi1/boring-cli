@@ -4,7 +4,7 @@ from typing import Optional
 
 import httpx
 
-from .config import get_jwt_token, get_server_url, get_lark_token, set_lark_token
+from .config import get_jwt_token, get_server_url, get_lark_token
 
 LARK_BASE_URL = "https://open.larksuite.com/open-apis"
 
@@ -218,7 +218,6 @@ class LarkClient:
             return response.json()
 
     def get_task(self, task_guid: str) -> dict:
-        """Get task details including description."""
         self._check_token()
         with httpx.Client(timeout=60) as client:
             response = client.get(
@@ -227,3 +226,32 @@ class LarkClient:
             )
             response.raise_for_status()
             return response.json()
+
+    def list_task_comments(self, task_guid: str, page_size: int = 50) -> list:
+        self._check_token()
+        all_comments = []
+        page_token = None
+        with httpx.Client(timeout=60) as client:
+            while True:
+                params = {
+                    "resource_type": "task",
+                    "resource_id": task_guid,
+                    "page_size": page_size,
+                }
+                if page_token:
+                    params["page_token"] = page_token
+                response = client.get(
+                    f"{LARK_BASE_URL}/task/v2/comments",
+                    headers=self._headers(),
+                    params=params,
+                )
+                response.raise_for_status()
+                data = response.json()
+                if data.get("code") != 0:
+                    break
+                items = data.get("data", {}).get("items", [])
+                all_comments.extend(items)
+                page_token = data.get("data", {}).get("page_token")
+                if not page_token or not data.get("data", {}).get("has_more", False):
+                    break
+        return all_comments
