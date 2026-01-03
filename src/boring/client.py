@@ -133,6 +133,22 @@ class APIClient:
             response.raise_for_status()
             return response.json()
 
+    def sync_claude_config(self, repo_name: str, machine: Optional[str] = None) -> dict:
+        """Sync Claude configuration for a repository."""
+        self._check_config()
+        params = {}
+        if machine:
+            params["machine"] = machine
+
+        with httpx.Client(timeout=60) as client:
+            response = client.get(
+                f"{self.base_url}/v1/claude-config/sync/{repo_name}",
+                headers=self._headers(),
+                params=params,
+            )
+            response.raise_for_status()
+            return response.json()
+
 
 class LarkClient:
     """Client for direct Lark API calls."""

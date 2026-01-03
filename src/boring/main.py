@@ -9,6 +9,7 @@ from .commands.sections import sections
 from .commands.setup import setup
 from .commands.solve import solve
 from .commands.status import status
+from .commands.sync import sync
 from .commands.update import update
 from .version_check import check_for_updates
 
@@ -33,13 +34,14 @@ def show_update_warning():
 @click.group()
 @click.version_option(version=__version__, prog_name="boring")
 def cli():
-    """Boring CLI - Manage Lark tasks from the command line.
+    """Boring CLI - Manage Lark tasks and Claude configs from the command line.
 
     \b
     Quick start:
       boring setup      Configure and login to Lark
       boring download   Download tasks to local folder
       boring solve      Move completed tasks to Solved
+      boring sync       Sync Claude configuration from server
       boring status     Show current configuration
       boring sections   List tasklists and sections
       boring update     Update CLI to latest version
@@ -50,6 +52,7 @@ def cli():
 cli.add_command(setup)
 cli.add_command(download)
 cli.add_command(solve)
+cli.add_command(sync)
 cli.add_command(status)
 cli.add_command(sections)
 cli.add_command(update)
