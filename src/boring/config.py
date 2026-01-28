@@ -99,7 +99,80 @@ def set_lark_token(token: str) -> None:
     set_value("lark_token", token)
 
 
+def get_backend_type() -> Optional[str]:
+    """Get configured backend type ('lark' or 'kanban')."""
+    return get_value("backend_type") or "lark"  # Default to lark for backward compat
+
+
+def set_backend_type(backend_type: str) -> None:
+    """Set backend type."""
+    if backend_type not in ["lark", "kanban"]:
+        raise ValueError(f"Invalid backend type: {backend_type}")
+    set_value("backend_type", backend_type)
+
+
+def get_kanban_base_url() -> Optional[str]:
+    """Get Kanban base URL."""
+    return get_value("kanban_base_url")
+
+
+def set_kanban_base_url(url: str) -> None:
+    """Set Kanban base URL."""
+    set_value("kanban_base_url", url)
+
+
+def get_kanban_api_key() -> Optional[str]:
+    """Get Kanban API key."""
+    return get_value("kanban_api_key")
+
+
+def set_kanban_api_key(key: str) -> None:
+    """Set Kanban API key."""
+    set_value("kanban_api_key", key)
+
+
+def get_kanban_board_id() -> Optional[str]:
+    """Get Kanban board ID."""
+    return get_value("kanban_board_id")
+
+
+def set_kanban_board_id(board_id: str) -> None:
+    """Set Kanban board ID."""
+    set_value("kanban_board_id", board_id)
+
+
+def get_kanban_list_id() -> Optional[str]:
+    """Get Kanban list/column ID for in-progress tasks."""
+    return get_value("kanban_list_id")
+
+
+def set_kanban_list_id(list_id: str) -> None:
+    """Set Kanban list/column ID for in-progress tasks."""
+    set_value("kanban_list_id", list_id)
+
+
+def get_kanban_done_list_id() -> Optional[str]:
+    """Get Kanban list/column ID for done/solved tasks."""
+    return get_value("kanban_done_list_id")
+
+
+def set_kanban_done_list_id(list_id: str) -> None:
+    """Set Kanban list/column ID for done/solved tasks."""
+    set_value("kanban_done_list_id", list_id)
+
+
 def is_configured() -> bool:
-    """Check if the CLI is properly configured."""
-    config = load_config()
-    return all([config.get("server_url"), config.get("jwt_token"), config.get("bugs_dir")])
+    """Check if the CLI is properly configured based on backend type."""
+    config_data = load_config()
+    backend_type = config_data.get("backend_type", "lark")
+    bugs_dir = config_data.get("bugs_dir")
+
+    if not bugs_dir:
+        return False
+
+    if backend_type == "lark":
+        return all([config_data.get("server_url"), config_data.get("jwt_token")])
+    elif backend_type == "kanban":
+        return all([config_data.get("kanban_base_url"), config_data.get("kanban_api_key")])
+
+    return False
