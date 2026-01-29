@@ -168,6 +168,18 @@ def setup_kanban():
     """Setup Kanban backend with auto-discovery."""
     console.print("\n[bold cyan]Kanban (Outline) Setup[/bold cyan]")
 
+    # Server URL (Common for all backends)
+    server_url = click.prompt(
+        "Server URL", default=config.get_server_url() or "https://boring.omelet.tech/api"
+    )
+    config.set_server_url(server_url)
+
+    # Bugs directory
+    bugs_dir = click.prompt(
+        "Bugs output directory", default=config.get_bugs_dir() or "/tmp/bugs"
+    )
+    config.set_bugs_dir(bugs_dir)
+
     # Kanban base URL
     kanban_base_url = click.prompt(
         "Kanban Base URL",
@@ -177,18 +189,12 @@ def setup_kanban():
 
     # Kanban API key
     kanban_api_key = click.prompt(
-        "Kanban API Key", default=config.get_kanban_api_key() or "", hide_input=True
+        "Kanban API Key", default=config.get_kanban_api_key() or ""
     )
     if not kanban_api_key:
         console.print("\n[bold red]No API key provided.[/bold red]")
         raise click.Abort()
     config.set_kanban_api_key(kanban_api_key.strip())
-
-    # Bugs directory
-    bugs_dir = click.prompt(
-        "Bugs output directory", default=config.get_bugs_dir() or "/tmp/bugs"
-    )
-    config.set_bugs_dir(bugs_dir)
 
     # Validate connection
     console.print("\n[bold]Validating connection...[/bold]")
