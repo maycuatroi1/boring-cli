@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "boring-cli"
-version = "0.1.8"
+version = "0.1.9"
 description = "CLI tool for managing Lark Suite tasks"
 readme = "README.md"
 license = "MIT"
