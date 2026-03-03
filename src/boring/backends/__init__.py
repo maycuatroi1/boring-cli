@@ -6,10 +6,24 @@ from .base import BackendClient, TaskItem, BoardInfo, SectionInfo
 from .lark import LarkBackend
 from .kanban import KanbanBackend
 from .. import config
+from ..client import APIClient
 
 
 class BackendFactory:
     """Factory for creating backend client instances."""
+
+    @staticmethod
+    def _refresh_lark_token() -> str:
+        """Fetch a fresh Lark token from the server and update local config."""
+        api_client = APIClient(
+            base_url=config.get_server_url(),
+            token=config.get_jwt_token(),
+        )
+        token_data = api_client.get_lark_token()
+        fresh_token = token_data.get("access_token")
+        if fresh_token:
+            config.set_lark_token(fresh_token)
+        return fresh_token or config.get_lark_token()
 
     @staticmethod
     def create_backend(backend_type: Optional[str] = None) -> BackendClient:
@@ -27,10 +41,11 @@ class BackendFactory:
         backend = backend_type or config.get_backend_type()
 
         if backend == "lark":
+            lark_token = BackendFactory._refresh_lark_token()
             return LarkBackend(
                 server_url=config.get_server_url(),
                 jwt_token=config.get_jwt_token(),
-                lark_token=config.get_lark_token(),
+                lark_token=lark_token,
                 tasklist_guid=config.get_tasklist_guid(),
                 section_guid=config.get_section_guid(),
                 solved_section_guid=config.get_solved_section_guid(),
