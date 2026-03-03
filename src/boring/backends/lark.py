@@ -299,7 +299,11 @@ class LarkBackend(BackendClient):
         )
 
     def move_task(
-        self, task_id: str, from_section_id: str, to_section_id: str
+        self,
+        task_id: str,
+        from_section_id: str,
+        to_section_id: str,
+        comment: Optional[str] = None,
     ) -> bool:
         """Move a Lark task to a different section."""
         try:
@@ -308,6 +312,7 @@ class LarkBackend(BackendClient):
                 task_guid=task_id,
                 tasklist_guid=self.tasklist_guid,
                 section_guid=to_section_id,
+                comment=comment,
             )
             return True
         except Exception:

@@ -264,10 +264,19 @@ class KanbanBackend(BackendClient):
         )
 
     def move_task(
-        self, task_id: str, from_section_id: str, to_section_id: str
+        self,
+        task_id: str,
+        from_section_id: str,
+        to_section_id: str,
+        comment: Optional[str] = None,
     ) -> bool:
         """Move a Kanban card to a different column."""
         try:
+            if comment:
+                self._post(
+                    "/api/kanban.cards.comment",
+                    {"cardId": task_id, "comment": comment},
+                )
             self._post(
                 "/api/kanban.cards.move", {"cardId": task_id, "listId": to_section_id}
             )

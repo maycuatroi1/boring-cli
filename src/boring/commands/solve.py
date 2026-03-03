@@ -78,14 +78,24 @@ def solve(keep: bool):
 
     for task_id, folder_path in task_folders:
         try:
+            comment = None
+            fix_summary_path = os.path.join(folder_path, "fix-summary.md")
+            if os.path.exists(fix_summary_path):
+                with open(fix_summary_path, "r") as f:
+                    comment = f.read().strip()
+
             success = backend.move_task(
                 task_id=task_id,
                 from_section_id=from_section_id,
                 to_section_id=to_section_id,
+                comment=comment,
             )
 
             if success:
-                console.print(f"[green]OK[/green] - {task_id}")
+                if comment:
+                    console.print(f"[green]OK[/green] - {task_id} (comment posted)")
+                else:
+                    console.print(f"[green]OK[/green] - {task_id}")
                 if not keep:
                     shutil.rmtree(folder_path)
                 success_count += 1

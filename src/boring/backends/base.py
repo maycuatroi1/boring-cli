@@ -115,7 +115,11 @@ class BackendClient(ABC):
 
     @abstractmethod
     def move_task(
-        self, task_id: str, from_section_id: str, to_section_id: str
+        self,
+        task_id: str,
+        from_section_id: str,
+        to_section_id: str,
+        comment: Optional[str] = None,
     ) -> bool:
         """Move a task/card from one section to another.
 
@@ -123,6 +127,7 @@ class BackendClient(ABC):
             task_id: The unique identifier for the task/card.
             from_section_id: The source section/column identifier.
             to_section_id: The destination section/column identifier.
+            comment: Optional comment to post on the task before moving.
 
         Returns:
             True if the move was successful, False otherwise.

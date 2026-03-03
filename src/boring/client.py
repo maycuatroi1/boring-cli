@@ -109,15 +109,22 @@ class APIClient:
             return response.json()
 
     def solve_task(
-        self, task_guid: str, tasklist_guid: str, section_guid: str
+        self,
+        task_guid: str,
+        tasklist_guid: str,
+        section_guid: str,
+        comment: Optional[str] = None,
     ) -> dict:
-        """Move a task to the solved section."""
+        """Move a task to the solved section, optionally posting a comment."""
         self._check_config()
+        payload = {"tasklist_guid": tasklist_guid, "section_guid": section_guid}
+        if comment:
+            payload["comment"] = comment
         with httpx.Client() as client:
             response = client.post(
                 f"{self.base_url}/v1/tasks/{task_guid}/solve",
                 headers=self._headers(),
-                json={"tasklist_guid": tasklist_guid, "section_guid": section_guid},
+                json=payload,
             )
             response.raise_for_status()
             return response.json()
