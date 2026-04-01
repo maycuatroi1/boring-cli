@@ -312,6 +312,32 @@ class LarkClient:
             self._check_response(response)
             return response.json()
 
+    @staticmethod
+    def _text_to_rich_content(text: str) -> str:
+        import json
+        paragraphs = text.split("\n")
+        content = []
+        for line in paragraphs:
+            content.append([{"tag": "text", "text": line}])
+        return json.dumps({"en_us": {"content": content}})
+
+    def create_comment(self, task_guid: str, content: str) -> dict:
+        self._check_token()
+        rich_content = self._text_to_rich_content(content)
+        with httpx.Client(timeout=60) as client:
+            response = client.post(
+                f"{LARK_BASE_URL}/task/v2/comments",
+                headers=self._headers(),
+                json={
+                    "content": content,
+                    "rich_content": rich_content,
+                    "resource_type": "task",
+                    "resource_id": task_guid,
+                },
+            )
+            self._check_response(response)
+            return response.json()
+
     def download_file(self, url: str) -> bytes:
         with httpx.Client(timeout=120, follow_redirects=True) as client:
             response = client.get(url)

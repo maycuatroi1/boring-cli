@@ -263,6 +263,16 @@ class KanbanBackend(BackendClient):
             comments=comments,
         )
 
+    def add_comment(self, task_id: str, comment: str) -> bool:
+        try:
+            self._post(
+                "/api/kanban.cards.comment",
+                {"cardId": task_id, "comment": comment},
+            )
+            return True
+        except Exception:
+            return False
+
     def move_task(
         self,
         task_id: str,

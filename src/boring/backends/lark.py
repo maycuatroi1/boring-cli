@@ -345,6 +345,18 @@ class LarkBackend(BackendClient):
             attachments=attachments,
         )
 
+    def add_comment(self, task_id: str, comment: str) -> bool:
+        client = self._get_lark_client()
+        try:
+            client.create_comment(task_id, comment)
+            return True
+        except Exception:
+            if self._refresh_and_retry():
+                client = self._get_lark_client()
+                client.create_comment(task_id, comment)
+                return True
+            raise
+
     def move_task(
         self,
         task_id: str,
@@ -352,14 +364,14 @@ class LarkBackend(BackendClient):
         to_section_id: str,
         comment: Optional[str] = None,
     ) -> bool:
-        """Move a Lark task to a different section."""
         try:
+            if comment:
+                self.add_comment(task_id, comment)
             api_client = APIClient(base_url=self.server_url, token=self.jwt_token)
             api_client.solve_task(
                 task_guid=task_id,
                 tasklist_guid=self.tasklist_guid,
                 section_guid=to_section_id,
-                comment=comment,
             )
             return True
         except Exception:

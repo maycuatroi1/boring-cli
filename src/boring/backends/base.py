@@ -139,6 +139,10 @@ class BackendClient(ABC):
         pass
 
     @abstractmethod
+    def add_comment(self, task_id: str, comment: str) -> bool:
+        pass
+
+    @abstractmethod
     def get_backend_type(self) -> str:
         """Return backend type identifier.
 

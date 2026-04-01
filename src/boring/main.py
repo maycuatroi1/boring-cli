@@ -4,6 +4,7 @@ import click
 from rich.console import Console
 
 from . import __version__
+from .commands.comment import comment
 from .commands.download import download
 from .commands.sections import sections
 from .commands.setup import setup
@@ -41,6 +42,7 @@ def cli():
       boring setup      Configure and login to Lark
       boring download   Download tasks to local folder
       boring solve      Move completed tasks to Solved
+      boring comment    Post a comment on a task
       boring sync       Sync Claude configuration from server
       boring status     Show current configuration
       boring sections   List tasklists and sections
@@ -50,6 +52,7 @@ def cli():
 
 
 cli.add_command(setup)
+cli.add_command(comment)
 cli.add_command(download)
 cli.add_command(solve)
 cli.add_command(sync)
