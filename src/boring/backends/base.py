@@ -16,6 +16,7 @@ class TaskItem:
     due_date: Optional[str] = None
     labels: List[str] = field(default_factory=list)
     comments: List[Dict[str, Any]] = field(default_factory=list)
+    attachments: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass

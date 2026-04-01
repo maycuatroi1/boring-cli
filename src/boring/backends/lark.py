@@ -156,6 +156,19 @@ class LarkBackend(BackendClient):
             raise Exception("Lark token not configured. Run 'boring setup' first.")
         return self._lark_client
 
+    def _refresh_and_retry(self):
+        try:
+            api_client = APIClient(base_url=self.server_url, token=self.jwt_token)
+            token_data = api_client.get_lark_token()
+            fresh_token = token_data.get("access_token")
+            if fresh_token:
+                self.lark_token = fresh_token
+                self._lark_client = LarkClient(access_token=fresh_token)
+                return True
+        except Exception:
+            pass
+        return False
+
     def list_boards(self) -> List[BoardInfo]:
         """List all Lark tasklists."""
         client = self._get_lark_client()
@@ -190,7 +203,14 @@ class LarkBackend(BackendClient):
     ) -> List[TaskItem]:
         """List all tasks in a Lark section."""
         client = self._get_lark_client()
-        result = client.list_tasks_in_section(section_id, page_size=50)
+        try:
+            result = client.list_tasks_in_section(section_id, page_size=50)
+        except Exception:
+            if self._refresh_and_retry():
+                client = self._get_lark_client()
+                result = client.list_tasks_in_section(section_id, page_size=50)
+            else:
+                raise
 
         task_items = []
         label_filter = set(lbl.lower() for lbl in labels) if labels else None
@@ -215,8 +235,14 @@ class LarkBackend(BackendClient):
         """Get detailed Lark task information."""
         client = self._get_lark_client()
 
-        # Get task details
-        task_detail = client.get_task(task_id)
+        try:
+            task_detail = client.get_task(task_id)
+        except Exception:
+            if self._refresh_and_retry():
+                client = self._get_lark_client()
+                task_detail = client.get_task(task_id)
+            else:
+                raise
         task_data = task_detail.get("data", {}).get("task", {})
 
         # Extract basic info
@@ -231,8 +257,11 @@ class LarkBackend(BackendClient):
         else:
             description = ""
 
-        # Build full markdown with metadata
+        task_url = task_data.get("url", "")
+
         full_markdown = f"# {title}\n\n"
+        if task_url:
+            full_markdown += f"**Lark:** {task_url}\n\n"
 
         # Add priority
         priority = task_data.get("priority")
@@ -288,6 +317,23 @@ class LarkBackend(BackendClient):
         except Exception:
             comments = []
 
+        attachments = []
+        try:
+            attachments_data = client.list_attachments("task", task_id)
+            for att in attachments_data:
+                att_guid = att.get("guid", "")
+                att_detail = client.get_attachment(att_guid)
+                att_info = att_detail.get("data", {}).get("attachment", {})
+                attachments.append({
+                    "guid": att_guid,
+                    "name": att_info.get("name", ""),
+                    "url": att_info.get("url", ""),
+                    "file_token": att_info.get("file_token", ""),
+                    "size": att_info.get("size", 0),
+                })
+        except Exception:
+            pass
+
         return TaskItem(
             id=task_id,
             title=title,
@@ -296,6 +342,7 @@ class LarkBackend(BackendClient):
             due_date=due_date,
             labels=task_labels,
             comments=comments,
+            attachments=attachments,
         )
 
     def move_task(

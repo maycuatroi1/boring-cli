@@ -173,6 +173,19 @@ class LarkClient:
         if not self.access_token:
             raise Exception("Lark token not available. Run 'boring setup' first.")
 
+    @staticmethod
+    def _check_response(response: httpx.Response) -> None:
+        if response.status_code >= 400:
+            msg = ""
+            try:
+                data = response.json()
+                msg = data.get("msg", "")
+            except Exception:
+                pass
+            if msg:
+                raise Exception(f"Lark API error ({response.status_code}): {msg}")
+            response.raise_for_status()
+
     def list_tasklists(self, page_size: int = 50) -> dict:
         """List all tasklists."""
         self._check_token()
@@ -182,22 +195,20 @@ class LarkClient:
                 headers=self._headers(),
                 params={"page_size": page_size},
             )
-            response.raise_for_status()
+            self._check_response(response)
             return response.json()
 
     def get_tasklist(self, tasklist_guid: str) -> dict:
-        """Get tasklist details including sections."""
         self._check_token()
         with httpx.Client() as client:
             response = client.get(
                 f"{LARK_BASE_URL}/task/v2/tasklists/{tasklist_guid}",
                 headers=self._headers(),
             )
-            response.raise_for_status()
+            self._check_response(response)
             return response.json()
 
     def list_sections(self, tasklist_guid: str, page_size: int = 50) -> dict:
-        """List all sections in a tasklist."""
         self._check_token()
         with httpx.Client() as client:
             response = client.get(
@@ -209,11 +220,10 @@ class LarkClient:
                     "page_size": page_size,
                 },
             )
-            response.raise_for_status()
+            self._check_response(response)
             return response.json()
 
     def list_tasks_in_section(self, section_guid: str, page_size: int = 50) -> dict:
-        """List all tasks in a section."""
         self._check_token()
         with httpx.Client() as client:
             response = client.get(
@@ -221,7 +231,7 @@ class LarkClient:
                 headers=self._headers(),
                 params={"page_size": page_size},
             )
-            response.raise_for_status()
+            self._check_response(response)
             return response.json()
 
     def get_task(self, task_guid: str) -> dict:
@@ -231,7 +241,7 @@ class LarkClient:
                 f"{LARK_BASE_URL}/task/v2/tasks/{task_guid}",
                 headers=self._headers(),
             )
-            response.raise_for_status()
+            self._check_response(response)
             return response.json()
 
     def list_task_comments(self, task_guid: str, page_size: int = 50) -> list:
@@ -252,7 +262,7 @@ class LarkClient:
                     headers=self._headers(),
                     params=params,
                 )
-                response.raise_for_status()
+                self._check_response(response)
                 data = response.json()
                 if data.get("code") != 0:
                     break
@@ -262,3 +272,48 @@ class LarkClient:
                 if not page_token or not data.get("data", {}).get("has_more", False):
                     break
         return all_comments
+
+    def list_attachments(self, resource_type: str, resource_id: str, page_size: int = 50) -> list:
+        self._check_token()
+        all_attachments = []
+        page_token = None
+        with httpx.Client(timeout=60) as client:
+            while True:
+                params = {
+                    "resource_type": resource_type,
+                    "resource_id": resource_id,
+                    "page_size": page_size,
+                }
+                if page_token:
+                    params["page_token"] = page_token
+                response = client.get(
+                    f"{LARK_BASE_URL}/task/v2/attachments",
+                    headers=self._headers(),
+                    params=params,
+                )
+                self._check_response(response)
+                data = response.json()
+                if data.get("code") != 0:
+                    break
+                items = data.get("data", {}).get("items", [])
+                all_attachments.extend(items)
+                page_token = data.get("data", {}).get("page_token")
+                if not page_token or not data.get("data", {}).get("has_more", False):
+                    break
+        return all_attachments
+
+    def get_attachment(self, attachment_guid: str) -> dict:
+        self._check_token()
+        with httpx.Client(timeout=60) as client:
+            response = client.get(
+                f"{LARK_BASE_URL}/task/v2/attachments/{attachment_guid}",
+                headers=self._headers(),
+            )
+            self._check_response(response)
+            return response.json()
+
+    def download_file(self, url: str) -> bytes:
+        with httpx.Client(timeout=120, follow_redirects=True) as client:
+            response = client.get(url)
+            response.raise_for_status()
+            return response.content
