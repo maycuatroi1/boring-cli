@@ -364,18 +364,15 @@ class LarkBackend(BackendClient):
         to_section_id: str,
         comment: Optional[str] = None,
     ) -> bool:
-        try:
-            if comment:
-                self.add_comment(task_id, comment)
-            api_client = APIClient(base_url=self.server_url, token=self.jwt_token)
-            api_client.solve_task(
-                task_guid=task_id,
-                tasklist_guid=self.tasklist_guid,
-                section_guid=to_section_id,
-            )
-            return True
-        except Exception:
-            return False
+        if comment:
+            self.add_comment(task_id, comment)
+        api_client = APIClient(base_url=self.server_url, token=self.jwt_token)
+        api_client.solve_task(
+            task_guid=task_id,
+            tasklist_guid=self.tasklist_guid,
+            section_guid=to_section_id,
+        )
+        return True
 
     def get_backend_type(self) -> str:
         """Return backend identifier."""
